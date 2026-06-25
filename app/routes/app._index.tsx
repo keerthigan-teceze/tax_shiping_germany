@@ -151,7 +151,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     take: 50,
   });
 
-  const mainData: ProductRow[] = productSamples.map((p) => ({
+  const mainData: ProductRow[] = productSamples.map((p: { sku: any; title: any; price: { toString: () => any; }; inventory_quantity: any; }) => ({
     sku: p.sku || "",
     title: p.title || "",
     price: p.price?.toString() || "",
@@ -175,7 +175,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     take: 50,
   });
 
-  const mappingRows: MappingRow[] = mappings.map((m) => ({
+  const mappingRows: MappingRow[] = mappings.map((m: { sku: any; updatedAt: { toLocaleString: () => any; }; ingramPartNumber: any; }) => ({
     appSku: m.sku,
     shopifySku: m.sku,
     status: "Mapped",
@@ -194,7 +194,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     take: 50,
   });
 
-  const logs: LogRow[] = shippingLogs.map((log) => ({
+  const logs: LogRow[] = shippingLogs.map((log: { sku: any; basePrice: number; taxAmount: number; carrierCharge: number; total: number; status: string; error: any; createdAt: { toLocaleString: () => any; }; }) => ({
     sku: log.sku,
     basePrice: log.basePrice.toFixed(2),
     tax: log.taxAmount.toFixed(2),
@@ -211,7 +211,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     take: 10,
   });
 
-  const requestLogs: RequestLogEntry[] = requestLogsRaw.map((log) => ({
+  const requestLogs: RequestLogEntry[] = requestLogsRaw.map((log: { id: any; shop: any; type: any; endpoint: any; method: any; requestBody: any; responseBody: any; status: any; error: any; durationMs: any; createdAt: any; }) => ({
     id: log.id,
     shop: log.shop,
     type: log.type,
