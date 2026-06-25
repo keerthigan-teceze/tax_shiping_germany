@@ -68,19 +68,32 @@ export default function ShippingCalculatorPanel({ defaultCarrierCharge, defaultT
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!sku.trim()) return;
+    if (!sku.trim()){
+    window.alert("Please enter SKU"); 
+      return;
+    } 
+
+    
+  console.log("Button clicked ✅", sku);
 
     setIsLoading(true);
     setResult(null);
 
     try {
       const formData = new FormData();
+      window.alert("Button clicked")
       formData.append("sku", sku.trim());
 
-      const response = await fetch("/app/calculate-shipping", {
+      const response = await fetch("/app.calculate-shipping", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
+
+    if (response.status === 401) {
+      alert("Session expired. Please refresh the app.");
+      return;
+    }
 
       const data = await response.json();
       setResult(data);
@@ -101,7 +114,7 @@ export default function ShippingCalculatorPanel({ defaultCarrierCharge, defaultT
         Enter a product SKU to calculate shipping costs using the configured tax rate and carrier charge.
       </p>
 
-      <form method="post" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <label style={{ display: "block", fontWeight: 600, color: "#334155" }}>
           Product SKU
           <input
@@ -115,17 +128,16 @@ export default function ShippingCalculatorPanel({ defaultCarrierCharge, defaultT
           />
         </label>
 
-        <button
-          type="submit"
-          disabled={!sku.trim()}
-          style={{
-            ...buttonStyles,
-            opacity: isLoading || !sku.trim() ? 0.6 : 1,
-            cursor: isLoading || !sku.trim() ? "not-allowed" : "pointer",
-          }}
-        >
-          {isLoading ? "Calculating..." : "Calculate Shipping"}
-        </button>
+       <button
+  type="submit"
+  style={{
+    ...buttonStyles,
+    opacity: isLoading ? 0.6 : 1,              // ✅ only loading affects it
+    cursor: isLoading ? "not-allowed" : "pointer",
+  }}
+>
+  {isLoading ? "Calculating..." : "Calculate Shipping"}
+</button>
       </form>
 
       {result && (

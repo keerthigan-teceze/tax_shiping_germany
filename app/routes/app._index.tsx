@@ -424,11 +424,11 @@ export default function Index() {
           defaultTaxRate={currentRates.taxRate} 
         />
       </div>
-
+      <LogsPanel logs={logs} />
       <RequestLogsPanel logs={requestLogs} />
 
       <DataTables products={mainData} mappingRows={mappingRows} productCount={productCount} mappingCount={mappingCount} latestSyncJob={latestSyncJob} />
-      <LogsPanel logs={logs} />
+      
     </main>
   );
 }
