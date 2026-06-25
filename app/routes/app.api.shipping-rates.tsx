@@ -72,7 +72,6 @@ const TAX_ONLY_PRODUCT_TYPES = [
   "Data Storage Services",
   "Installation Services",
   "Operating Systems",
-  "Servers",
   "Cloud Solutions"
 ];
 
