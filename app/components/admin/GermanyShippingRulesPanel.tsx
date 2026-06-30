@@ -98,156 +98,148 @@ export default function GermanyShippingRulesPanel({
           </tr>
         </thead>
 
-        <tbody>
-          {rules.map((rule) => (
-            <tr key={rule.id}>
-              {editingId === rule.id ? (
-                <>
-                  <td style={cell}>
-                    <Form
-                      method="post"
-                      id={`edit-rule-${rule.id}`}
-                    >
-                      <input
-                        type="hidden"
-                        name="action"
-                        value="update-rule"
-                      />
+<tbody>
+  {rules.map((rule) => (
+    <tr key={rule.id}>
+      {editingId === rule.id ? (
+        <>
+          <td style={cell}>
+            <Form method="post">
+              <input
+                type="hidden"
+                name="action"
+                value="update-rule"
+              />
 
-                      <input
-                        type="hidden"
-                        name="id"
-                        value={rule.id}
-                      />
+              <input
+                type="hidden"
+                name="id"
+                value={rule.id}
+              />
 
-                      <input
-                        type="number"
-                        step="0.01"
-                        name="minWeight"
-                        defaultValue={Number(
-                          rule.Min_Weight ?? 0,
-                        )}
-                        style={inputStyle}
-                        required
-                      />
-                    </Form>
-                  </td>
+              <input
+                type="number"
+                step="0.01"
+                name="minWeight"
+                defaultValue={Number(rule.Min_Weight)}
+                style={inputStyle}
+                required
+              />
 
-                  <td style={cell}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="maxWeight"
-                      form={`edit-rule-${rule.id}`}
-                      defaultValue={Number(
-                        rule.Max_Weight ?? 0,
-                      )}
-                      style={inputStyle}
-                      required
-                    />
-                  </td>
+              <input
+                type="hidden"
+                name="maxWeight"
+                value={Number(rule.Max_Weight)}
+              />
 
-                  <td style={cell}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="price"
-                      form={`edit-rule-${rule.id}`}
-                      defaultValue={Number(
-                        rule.Price ?? 0,
-                      )}
-                      style={inputStyle}
-                      required
-                    />
-                  </td>
+              <input
+                type="hidden"
+                name="price"
+                value={Number(rule.Price)}
+              />
 
-                  <td style={cell}>
-                    <button
-                      type="submit"
-                      form={`edit-rule-${rule.id}`}
-                      style={saveButton}
-                    >
-                      Save
-                    </button>
+              <button
+                type="submit"
+                style={saveButton}
+              >
+                Save
+              </button>
 
-                    <button
-                      type="button"
-                      style={cancelButton}
-                      onClick={() =>
-                        setEditingId(null)
-                      }
-                    >
-                      Cancel
-                    </button>
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td style={cell}>
-                    {Number(rule.Min_Weight ?? 0)}
-                  </td>
+              <button
+                type="button"
+                style={cancelButton}
+                onClick={() => setEditingId(null)}
+              >
+                Cancel
+              </button>
+            </Form>
+          </td>
 
-                  <td style={cell}>
-                    {Number(rule.Max_Weight ?? 0)}
-                  </td>
+          <td style={cell}>
+            <input
+              form={`rule-${rule.id}`}
+              type="number"
+              step="0.01"
+              name="maxWeight"
+              defaultValue={Number(rule.Max_Weight)}
+              style={inputStyle}
+            />
+          </td>
 
-                  <td style={cell}>
-                    €
-                    {Number(
-                      rule.Price ?? 0,
-                    ).toFixed(2)}
-                  </td>
+          <td style={cell}>
+            <input
+              form={`rule-${rule.id}`}
+              type="number"
+              step="0.01"
+              name="price"
+              defaultValue={Number(rule.Price)}
+              style={inputStyle}
+            />
+          </td>
 
-                  <td style={cell}>
-                    <button
-                      style={editButton}
-                      onClick={() =>
-                        setEditingId(rule.id)
-                      }
-                    >
-                      Edit
-                    </button>
+          <td style={cell}></td>
+        </>
+      ) : (
+        <>
+          <td style={cell}>
+            {Number(rule.Min_Weight)}
+          </td>
 
-                    <Form
-                      method="post"
-                      style={{
-                        display: "inline",
-                      }}
-                    >
-                      <input
-                        type="hidden"
-                        name="action"
-                        value="delete-rule"
-                      />
+          <td style={cell}>
+            {Number(rule.Max_Weight)}
+          </td>
 
-                      <input
-                        type="hidden"
-                        name="id"
-                        value={rule.id}
-                      />
+          <td style={cell}>
+            €{Number(rule.Price).toFixed(2)}
+          </td>
 
-                      <button
-                        type="submit"
-                        style={deleteButton}
-                        onClick={(e) => {
-                          if (
-                            !window.confirm(
-                              "Are you sure you want to delete this shipping rule?",
-                            )
-                          ) {
-                            e.preventDefault();
-                          }
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </Form>
-                  </td>
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
+          <td style={cell}>
+            <button
+              type="button"
+              style={editButton}
+              onClick={() => setEditingId(rule.id)}
+            >
+              Edit
+            </button>
+
+            <Form
+              method="post"
+              style={{ display: "inline" }}
+            >
+              <input
+                type="hidden"
+                name="action"
+                value="delete-rule"
+              />
+
+              <input
+                type="hidden"
+                name="id"
+                value={rule.id}
+              />
+
+              <button
+                type="submit"
+                style={deleteButton}
+                onClick={(e) => {
+                  if (
+                    !window.confirm(
+                      "Delete this shipping rule?"
+                    )
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </Form>
+          </td>
+        </>
+      )}
+    </tr>
+  ))}
+</tbody>
       </table>
 
       <div
