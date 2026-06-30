@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs } from "react-router";
-import { json } from "react-router";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
@@ -89,26 +88,36 @@ export const action = async ({
       }
     });
 
-    return json({
-      success: true,
-    });
+return new Response(
+  JSON.stringify({
+    success: true,
+  }),
+  {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  },
+);
   } catch (error) {
     console.error(
       "Failed to save Germany shipping rules:",
       error,
     );
 
-    return json(
-      {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown error",
-      },
-      {
-        status: 500,
-      },
-    );
+return new Response(
+  JSON.stringify({
+    success: false,
+    error:
+      error instanceof Error
+        ? error.message
+        : "Unknown error",
+  }),
+  {
+    status: 500,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  },
+);
   }
 };
