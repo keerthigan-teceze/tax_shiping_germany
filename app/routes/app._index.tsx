@@ -35,6 +35,48 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const action = formData.get("action");
 
+  if (action === "create-rule") {
+  await prisma.shipping_rules_DE.create({
+    data: {
+      Min_Weight: 0,
+      Max_Weight: 0,
+      Price: 0,
+    },
+  });
+
+  return redirect("/app");
+}
+
+if (action === "update-rule") {
+const id = BigInt(formData.get("id") as string);
+
+  await prisma.shipping_rules_DE.update({
+    where: {
+      id,
+    },
+    data: {
+      Min_Weight: Number(formData.get("minWeight")),
+      Max_Weight: Number(formData.get("maxWeight")),
+      Price: Number(formData.get("price")),
+    },
+  });
+
+  return redirect("/app");
+}
+
+if (action === "delete-rule") {
+const id = BigInt(formData.get("id") as string);
+
+  await prisma.shipping_rules_DE.delete({
+    where: {
+      id,
+    },
+  });
+
+  return redirect("/app");
+}
+
+
   if (action === "sync-products") {
     try {
       const existingRunningJob = await prisma.productSyncJob_de.findFirst({

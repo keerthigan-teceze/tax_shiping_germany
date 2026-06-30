@@ -6,6 +6,29 @@ interface ShippingItem {
   product_type?: string | null;
 }
 
+const SHIPPING_EDGE_CASES = {
+  MAX_PARCEL_WEIGHT: 31.5,
+
+  HEAVY_ITEM_RATES: [
+    {
+      minWeight: 31.5,
+      maxWeight: 50,
+      price: 49.99,
+    },
+    {
+      minWeight: 50,
+      maxWeight: 100,
+      price: 89.99,
+    },
+    {
+      minWeight: 100,
+      maxWeight: 9999,
+      price: 149.99,
+    },
+  ],
+};
+
+
 function parseSourceType(sourceType?: string | null): string {
   const raw = (sourceType ?? "unknown").toString().trim();
 
@@ -36,21 +59,54 @@ export class AdvancedShippingEngineDE {
     let totalShipping = 0;
     let totalWeight = 0;
 
-    for (const shipment of shipments) {
-      const weight = this.calculateWeight(shipment);
+  for (const shipment of shipments) {
+    let shipmentPrice = 0;
+    let shipmentWeight = 0;
 
-      totalWeight += weight;
+    const normalItems: ShippingItem[] = [];
 
-      const shipmentPrice = await this.calculateShipment(weight);
+    for (const item of shipment) {
+      const itemWeight =
+        item.weight != null &&
+        Number(item.weight) > 0
+          ? Number(item.weight)
+          : this.getDefaultWeight(item);
 
-      console.log("📦 [SHIPMENT]", {
-        supplier: parseSourceType(shipment?.[0]?.source_type),
-        weight,
-        price: shipmentPrice,
-      });
+      shipmentWeight += itemWeight;
 
-      totalShipping += shipmentPrice;
+      if (this.isHeavySingleItem(item)) {
+        const heavyPrice =
+          this.getHeavyItemRate(itemWeight);
+
+        console.log("🚚 [HEAVY ITEM]", {
+          itemWeight,
+          heavyPrice,
+        });
+
+        shipmentPrice += heavyPrice;
+      } else {
+        normalItems.push(item);
+      }
     }
+
+    if (normalItems.length > 0) {
+      shipmentPrice += await this.calculatePackedShipment(
+        normalItems,
+      );
+    }
+
+    totalWeight += shipmentWeight;
+
+    console.log("📦 [SHIPMENT]", {
+      supplier: parseSourceType(
+        shipment?.[0]?.source_type,
+      ),
+      weight: shipmentWeight,
+      price: shipmentPrice,
+    });
+
+    totalShipping += shipmentPrice;
+  }
 
     const finalShipping = Math.ceil(totalShipping);
 
@@ -110,6 +166,73 @@ export class AdvancedShippingEngineDE {
     }
   }
 
+  isHeavySingleItem(item: ShippingItem): boolean {
+  const weight =
+    item.weight != null
+      ? Number(item.weight)
+      : this.getDefaultWeight(item);
+
+  return weight > SHIPPING_EDGE_CASES.MAX_PARCEL_WEIGHT;
+}
+
+getHeavyItemRate(weight: number): number {
+  const match =
+    SHIPPING_EDGE_CASES.HEAVY_ITEM_RATES.find(
+      (rate) =>
+        weight >= rate.minWeight &&
+        weight < rate.maxWeight,
+    );
+
+  return match?.price ?? 149.99;
+}
+
+async calculatePackedShipment(
+  items: ShippingItem[],
+): Promise<number> {
+  const parcels: number[] = [];
+
+  for (const item of items) {
+    const weight =
+      item.weight != null &&
+      Number(item.weight) > 0
+        ? Number(item.weight)
+        : this.getDefaultWeight(item);
+
+    let packed = false;
+
+    for (let i = 0; i < parcels.length; i++) {
+      if (
+        parcels[i] + weight <=
+        SHIPPING_EDGE_CASES.MAX_PARCEL_WEIGHT
+      ) {
+        parcels[i] += weight;
+        packed = true;
+        break;
+      }
+    }
+
+    if (!packed) {
+      parcels.push(weight);
+    }
+  }
+
+  let totalPrice = 0;
+
+  for (const parcelWeight of parcels) {
+    const parcelPrice =
+      await this.getRate(parcelWeight);
+
+    console.log("📦 [PACKED PARCEL]", {
+      parcelWeight,
+      parcelPrice,
+    });
+
+    totalPrice += parcelPrice;
+  }
+
+  return totalPrice;
+}
+
   async calculateShipment(totalWeight: number): Promise<number> {
     let remainingWeight = totalWeight;
     let totalPrice = 0;
@@ -149,10 +272,16 @@ export class AdvancedShippingEngineDE {
         const min = Number(rule.Min_Weight ?? 0);
         const max = Number(rule.Max_Weight ?? 0);
 
-        return (
-          weightNum >= min &&
-          weightNum < max
-        );
+      return (
+        weightNum >= min &&
+        (
+          weightNum < max ||
+          (
+            max === 31.5 &&
+            weightNum === 31.5
+          )
+        )
+      );
       });
 
       if (match) {
