@@ -89,9 +89,9 @@ export default function GermanyShippingRulesPanel({
         <tbody>
           {rules.map((rule) => (
             <tr key={rule.id}>
-              <td style={cell}>{rule.Min_Weight}</td>
-              <td style={cell}>{rule.Max_Weight}</td>
-              <td style={cell}>€{(rule.price ?? 0).toFixed(2)}</td>
+            <td style={cell}>{Number(rule.Min_Weight ?? 0)}</td>
+            <td style={cell}>{Number(rule.Max_Weight ?? 0)}</td>
+            <td style={cell}>€{Number(rule.price ?? 0).toFixed(2)}</td>
               <td style={cell}>
                 <button style={editButton}>Edit</button>
                 <button style={deleteButton}>Delete</button>

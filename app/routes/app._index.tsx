@@ -254,11 +254,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     usdToEuroRate: settings.usdToEuroRate,
   };
 
-  const germanyShippingRules = await prisma.shipping_rules_DE.findMany({
-  orderBy: {
-    Min_Weight: "asc",
-  },
-});
+  const germanyShippingRules = (
+    await prisma.shipping_rules_DE.findMany({
+      orderBy: {
+        Min_Weight: "asc",
+      },
+    })
+  ).map((rule) => ({
+    ...rule,
+    Min_Weight: Number(rule.Min_Weight),
+    Max_Weight: Number(rule.Max_Weight),
+    price: Number(rule.price),
+  }));
 
   return { mainData, mappingRows, logs, requestLogs, carrierService, rateSettings, productCount, mappingCount, latestSyncJob, germanyShippingRules };
 };
