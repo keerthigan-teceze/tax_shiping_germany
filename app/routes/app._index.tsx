@@ -19,6 +19,7 @@ import type {
   LogRow,
   RequestLogEntry,
 } from "../components/admin/types";
+import GermanyShippingRulesPanel from "../components/admin/GermanyShippingRulesPanel";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authResult = await authenticate.admin(request);
@@ -253,11 +254,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     usdToEuroRate: settings.usdToEuroRate,
   };
 
-  return { mainData, mappingRows, logs, requestLogs, carrierService, rateSettings, productCount, mappingCount, latestSyncJob };
+  const germanyShippingRules = (
+    await prisma.shipping_rules_DE.findMany({
+      orderBy: {
+        Min_Weight: "asc",
+      },
+    })
+  ).map((rule) => ({
+    ...rule,
+    Min_Weight: Number(rule.Min_Weight),
+    Max_Weight: Number(rule.Max_Weight),
+    Price: Number(rule.Price),
+  }));
+
+  return { mainData, mappingRows, logs, requestLogs, carrierService, rateSettings, productCount, mappingCount, latestSyncJob, germanyShippingRules };
 };
 
 export default function Index() {
-  const { mainData, mappingRows, logs, requestLogs, carrierService, rateSettings, productCount, mappingCount, latestSyncJob } = useLoaderData<typeof loader>();
+  const { mainData, mappingRows, logs, requestLogs, carrierService, rateSettings, productCount, mappingCount, latestSyncJob, germanyShippingRules } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const [currentRates, setCurrentRates] = useState<RateSettings>(rateSettings);
 
@@ -407,6 +421,13 @@ export default function Index() {
         <ConnectionPanel carrierService={carrierService} />
         <RateSettingsPanel settings={currentRates} />
       </section>
+
+      
+      <div style={{ marginTop: 20 }}>
+        <GermanyShippingRulesPanel
+          rules={germanyShippingRules}
+        />
+      </div>
 
       <div style={{ marginTop: 20 }}>
         <ShippingCalculatorPanel 

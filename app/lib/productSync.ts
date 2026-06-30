@@ -1,5 +1,4 @@
 import prisma from "../db.server";
-import { randomUUID } from "crypto";
 
 export interface SyncResult {
   success: boolean;
@@ -114,6 +113,9 @@ export async function syncProductsForShop(
         sku: true,
         price: true,
         part_number: true,
+        weight: true,
+        source_type: true,
+        product_type: true,
       },
       orderBy: { sku: "asc" },
       take: BATCH_SIZE,
@@ -157,28 +159,38 @@ export async function syncProductsForShop(
     // ✅ PROCESS ONE BATCH ONLY
     for (const product of products) {
       try {
-        if (!product.sku || product.price === null || !product.part_number) {
-          continue;
-        }
+      if (
+        !product.sku ||
+        product.price === null ||
+        !product.part_number
+      ) {
+        continue;
+      }
 
-        await prisma.productMapping_de.upsert({
-          where: {
-            shop_sku: {
-              shop,
-              sku: product.sku,
-            },
-          },
-          update: {
-            price: product.price,
-            ingramPartNumber: product.part_number,
-          },
-          create: {
+      await prisma.productMapping_de.upsert({
+        where: {
+          shop_sku: {
             shop,
             sku: product.sku,
-            price: product.price,
-            ingramPartNumber: product.part_number,
           },
-        });
+        },
+        update: {
+          price: product.price,
+          ingramPartNumber: product.part_number,
+          weight: product.weight,
+          source_type: product.source_type,
+          product_type: product.product_type,
+        },
+        create: {
+          shop,
+          sku: product.sku,
+          price: product.price,
+          ingramPartNumber: product.part_number,
+          weight: product.weight,
+          source_type: product.source_type,
+          product_type: product.product_type,
+        },
+      });
 
         processed++;
         cursorSku = product.sku;
