@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import prisma from "../db.server";
 import { logRequest } from "../lib/requestLog";
+import { AdvancedShippingEngineDE } from "../lib/advancedShippingCalculator";
 
 interface ShopifyRateItem {
   name: string;
@@ -88,7 +89,7 @@ function isTaxOnly(productType?: string | null): boolean {
 // Fetch live USD to Eur exchange rate
 async function getUsdToEuroRate(): Promise<number> {
   try {
-    const response = await fetch("https://api.frankfurter.app/latest?from=USD&to=Eur");
+    const response = await fetch("https://api.frankfurter.app/latest?from=USD&to=EUR");
     if (response.ok) {
       const data = await response.json();
       return data.rates?.EUR || 0.79;
@@ -99,9 +100,19 @@ async function getUsdToEuroRate(): Promise<number> {
   return 0.79; // Fallback rate
 }
 
-async function getProduct(shop: string, sku: string): Promise<{ price: number | null; productType: string | null }> {
+async function getProduct(
+  shop: string,
+  sku: string,
+): Promise<{
+  price: number | null;
+  productType: string | null;
+  weight: number | null;
+  sourceType: string | null;
+}> {
   let productType: string | null = null;
   let price: number | null = null;
+  let weight: number | null = null;
+  let sourceType: string | null = null;
 
   const mapping = await prisma.productMapping_de.findFirst({
     where: { shop, sku },
@@ -112,20 +123,32 @@ async function getProduct(shop: string, sku: string): Promise<{ price: number | 
     price = Number(mapping.price);
   }
 
-  // Always fetch product_type from shopify_products_final_DE as it's the source of truth
   const sourceProduct = await prisma.shopify_products_final_Germany.findUnique({
     where: { sku },
-    select: { price: true, product_type: true },
+    select: {
+      price: true,
+      product_type: true,
+      weight: true,
+      source_type: true,
+    },
   });
 
   if (sourceProduct) {
     productType = sourceProduct.product_type ?? null;
+    weight = sourceProduct.weight ?? null ? Number(sourceProduct.weight) : null;
+    sourceType = sourceProduct.source_type ?? null;
+
     if (price === null && sourceProduct.price) {
       price = Number(sourceProduct.price);
     }
   }
 
-  return { price, productType };
+  return {
+    price,
+    productType,
+    weight,
+    sourceType,
+  };
 }
 
 async function processRequest(shop: string, requestBody: ShopifyRateRequest): Promise<ShopifyRateResponse> {
@@ -148,7 +171,7 @@ async function processRequest(shop: string, requestBody: ShopifyRateRequest): Pr
         service_name: "DE Standard Shipping",
         service_code: "DE_STD",
         total_price: "0",
-        currency: "Eur",
+        currency: "EUR",
         description: "Configuration required",
       }],
     };
@@ -164,20 +187,42 @@ async function processRequest(shop: string, requestBody: ShopifyRateRequest): Pr
   let hasItems = false;
   let allItemsTaxOnly = true;
 
+  const shippingItems: Array<{
+  weight?: number | null;
+  source_type?: string | null;
+  product_type?: string | null;
+  }> = [];
+
   for (const item of items) {
     if (!item.requires_shipping) continue;
 
     hasItems = true;
-    const { price: dbPrice, productType } = await getProduct(shop, item.sku);
+    const {
+      price: dbPrice,
+      productType,
+      weight,
+      sourceType,
+    } = await getProduct(
+      shop,
+      item.sku
+    );
 
     if (!isTaxOnly(productType)) {
       allItemsTaxOnly = false;
+
+    for (let qty = 0; qty < item.quantity; qty++) {
+    shippingItems.push({
+      weight,
+      source_type: sourceType,
+      product_type: productType,
+    });
+  }
     }
 
     let priceEur: number;
 
     if (dbPrice !== null) {
-      // DB price is already in G
+      // DB price is already in EUR
       priceEur = dbPrice;
     } else {
       // Shopify price is in USD pennies - convert to Eur
@@ -198,7 +243,7 @@ console.log(`SKU: ${item.sku}, Price (Eur): ${priceEur}, Qty: ${item.quantity}, 
         service_name: "DE Standard Shipping",
         service_code: "DE_STD",
         total_price: "0",
-        currency: "Eur",
+        currency: "EUR",
         description: "No shipping required for this order",
       }],
     };
@@ -206,9 +251,22 @@ console.log(`SKU: ${item.sku}, Price (Eur): ${priceEur}, Qty: ${item.quantity}, 
 
   // Calculate only shipping costs: tax on items + carrier charge
   // Note: basePrice is not included - Shopify adds that separately
-  const taxAmount = totalPriceEur * (settings.taxPercentage / 100);
-  const carrierCharge = allItemsTaxOnly ? 0 : settings.carrierCharge;
-  const shippingCost = taxAmount + carrierCharge;
+    const taxAmount =
+      totalPriceEur * (settings.taxPercentage / 100);
+
+    let carrierCharge = 0;
+
+    if (!allItemsTaxOnly) {
+      const shippingEngine = new AdvancedShippingEngineDE();
+      console.log("📦 Shipping Items:", shippingItems);
+      carrierCharge = await shippingEngine.calculate(
+        shippingItems,
+        requestBody.rate.destination.postal_code,
+      );
+    }
+
+    const shippingCost =
+      taxAmount + carrierCharge;
 
   console.log("Final calculation:", { totalPriceEur, taxAmount, carrierCharge, shippingCost, allItemsTaxOnly });
 
@@ -217,7 +275,7 @@ console.log(`SKU: ${item.sku}, Price (Eur): ${priceEur}, Qty: ${item.quantity}, 
       service_name: "DE Standard Shipping",
       service_code: "DE_STD",
       total_price: Math.round(shippingCost * 100).toString(),
-      currency: "Eur",
+      currency: "EUR",
       description: "Standard delivery within the Germany",
     }],
   };
@@ -260,7 +318,7 @@ export async function action({ request }: ActionFunctionArgs) {
         service_name: "DE Standard Shipping",
         service_code: "DE_STD",
         total_price: "0",
-        currency: "Eur",
+        currency: "EUR",
         description: "Invalid request",
       }] 
     };
@@ -303,7 +361,7 @@ export async function action({ request }: ActionFunctionArgs) {
         service_name: "DE Standard Shipping",
         service_code: "DE_STD",
         total_price: "0",
-        currency: "Eur",
+        currency: "EUR",
         description: "Error: " + errorMessage,
       }] 
     };
@@ -334,7 +392,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       service_name: "DE Standard Shipping",
       service_code: "DE_STD",
       total_price: "0",
-      currency: "Eur",
+      currency: "EUR",
       description: "Use POST method for shipping rates",
     }] 
   };
