@@ -48,7 +48,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 if (action === "update-rule") {
+  
+console.log("Update ID:", formData.get("id"));
+
 const id = BigInt(formData.get("id") as string);
+
+
+console.log(
+  Object.fromEntries(formData.entries())
+);
 
   await prisma.shipping_rules_DE.update({
     where: {
