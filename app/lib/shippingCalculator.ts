@@ -1,4 +1,5 @@
 import prisma from "../db.server";
+import { AdvancedShippingEngineDE } from "./advancedShippingCalculator";
 
 export interface ShippingCalculationResult {
   success: boolean;
@@ -32,7 +33,6 @@ const TAX_ONLY_PRODUCT_TYPES = [
   "Data Storage Services",
   "Installation Services",
   "Operating Systems",
-  "Servers",
   "Cloud Solutions"
 ];
 
@@ -70,42 +70,71 @@ export async function calculateShippingForSku(
       },
     });
 
-    if (product && product.price) {
-      const basePrice = Number(product.price);
-      const taxAmount = basePrice * (settings.taxPercentage / 100);
+if (product && product.price) {
+  const basePrice = Number(product.price);
+  const taxAmount = basePrice * (settings.taxPercentage / 100);
 
-      // Check tax-only status from source product
-      const sourceProduct = await prisma.shopify_products_final_Germany.findUnique({
-        where: { sku },
-        select: { product_type: true },
-      });
-      const taxOnly = isTaxOnly(sourceProduct?.product_type);
-
-      const total = taxOnly
-        ? basePrice + taxAmount
-        : basePrice + taxAmount + settings.carrierCharge;
-
-      return {
-        success: true,
-        sku: product.sku || undefined,
-        basePrice: Number(basePrice.toFixed(2)),
-        taxPercentage: settings.taxPercentage,
-        taxAmount: Number(taxAmount.toFixed(2)),
-        carrierCharge: taxOnly ? 0 : Number(settings.carrierCharge.toFixed(2)),
-        total: Number(total.toFixed(2)),
-      };
-    }
-
-    // 2️⃣ Fallback to Shopify product
-    const sourceProduct = await prisma.shopify_products_final_Germany.findUnique({
+  const sourceProduct =
+    await prisma.ProductMapping_de.findUnique({
       where: { sku },
       select: {
         sku: true,
         title: true,
         price: true,
         product_type: true,
+        weight: true,
+        source_type: true,
       },
     });
+
+        const taxOnly = isTaxOnly(sourceProduct?.product_type);
+
+        let carrierCharge = 0;
+
+        if (!taxOnly && sourceProduct) {
+          const engine = new AdvancedShippingEngineDE();
+
+          carrierCharge = await engine.calculate([
+            {
+              weight:
+                sourceProduct.weight != null
+                  ? Number(sourceProduct.weight)
+                  : null,
+              source_type: sourceProduct.source_type,
+              product_type: sourceProduct.product_type,
+            },
+          ]);
+        }
+
+        const total =
+          basePrice +
+          taxAmount +
+          carrierCharge;
+
+        return {
+          success: true,
+          sku: product.sku || undefined,
+          basePrice: Number(basePrice.toFixed(2)),
+          taxPercentage: settings.taxPercentage,
+          taxAmount: Number(taxAmount.toFixed(2)),
+          carrierCharge: Number(carrierCharge.toFixed(2)),
+          total: Number(total.toFixed(2)),
+        };
+      }
+
+    // 2️⃣ Fallback to Shopify product
+      const sourceProduct =
+        await prisma.shopify_products_final_Germany.findUnique({
+          where: { sku },
+          select: {
+            sku: true,
+            title: true,
+            price: true,
+            product_type: true,
+            weight: true,
+            source_type: true,
+          },
+        });
 
     if (!sourceProduct || !sourceProduct.price) {
       return {
@@ -118,9 +147,27 @@ export async function calculateShippingForSku(
     const taxAmount = basePrice * (settings.taxPercentage / 100);
     const taxOnly = isTaxOnly(sourceProduct.product_type);
 
-    const total = taxOnly
-      ? basePrice + taxAmount
-      : basePrice + taxAmount + settings.carrierCharge;
+    let carrierCharge = 0;
+
+    if (!taxOnly) {
+      const engine = new AdvancedShippingEngineDE();
+
+      carrierCharge = await engine.calculate([
+        {
+          weight:
+            sourceProduct.weight != null
+              ? Number(sourceProduct.weight)
+              : null,
+          source_type: sourceProduct.source_type,
+          product_type: sourceProduct.product_type,
+        },
+      ]);
+    }
+
+    const total =
+      basePrice +
+      taxAmount +
+      carrierCharge;
 
     return {
       success: true,
@@ -129,9 +176,10 @@ export async function calculateShippingForSku(
       basePrice: Number(basePrice.toFixed(2)),
       taxPercentage: settings.taxPercentage,
       taxAmount: Number(taxAmount.toFixed(2)),
-      carrierCharge: taxOnly ? 0 : Number(settings.carrierCharge.toFixed(2)),
+      carrierCharge: Number(carrierCharge.toFixed(2)),
       total: Number(total.toFixed(2)),
     };
+
   } catch (error) {
     console.error("Shipping calculation error:", error);
 
