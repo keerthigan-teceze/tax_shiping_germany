@@ -1,5 +1,4 @@
 import prisma from "../db.server";
-import { randomUUID } from "crypto";
 
 export const loader = async () => {
   try {
@@ -25,7 +24,7 @@ export const loader = async () => {
       // ✅ Create new job (DON'T process here)
       await prisma.productSyncJob_UK.create({
         data: {
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           shop,
           status: "running",
           processed: 0,

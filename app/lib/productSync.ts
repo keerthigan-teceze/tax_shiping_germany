@@ -1,5 +1,4 @@
 import prisma from "../db.server";
-import { randomUUID } from "crypto";
 
 export interface SyncResult {
   success: boolean;
@@ -86,7 +85,7 @@ export async function syncProductsForShop(
         return { success: true, jobId: "", processed: 0, total: 0 };
       }
 
-      jobId = randomUUID();
+      jobId = crypto.randomUUID();
 
       await prisma.productSyncJob_de.create({
         data: {
@@ -103,7 +102,6 @@ export async function syncProductsForShop(
     // ✅ FETCH ONLY ONE BATCH (KEY CHANGE FOR VERCEL)
     const products = await prisma.shopify_products_final_Germany.findMany({
       where: {
-        sku: { not: null },
         price: { not: null },
         part_number: { not: null },
         ...(cursorSku && { sku: { gt: cursorSku } }),
