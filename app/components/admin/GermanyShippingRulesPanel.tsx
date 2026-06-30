@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { Form } from "react-router";
 
 interface GermanyShippingRule {
-  id: number;
+  id: number | null;
   Min_Weight: number;
   Max_Weight: number;
   Price: number;
@@ -13,9 +12,83 @@ interface Props {
 }
 
 export default function GermanyShippingRulesPanel({
-  rules,
+  rules: initialRules,
 }: Props) {
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [rules, setRules] =
+    useState<GermanyShippingRule[]>(initialRules);
+
+  const [saving, setSaving] = useState(false);
+
+  const updateRule = (
+    index: number,
+    field: keyof GermanyShippingRule,
+    value: number,
+  ) => {
+    const updated = [...rules];
+
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    };
+
+    setRules(updated);
+  };
+
+  const addRule = () => {
+    setRules([
+      ...rules,
+      {
+        id: null,
+        Min_Weight: 0,
+        Max_Weight: 0,
+        Price: 0,
+      },
+    ]);
+  };
+
+  const deleteRule = (index: number) => {
+    setRules(
+      rules.filter((_, i) => i !== index),
+    );
+  };
+
+  const saveRules = async () => {
+    try {
+      setSaving(true);
+
+      const response = await fetch(
+        "/app/api/germany-shipping-rules",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            rules,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to save rules",
+        );
+      }
+
+      alert("✅ Rules saved successfully");
+
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "❌ Failed to save shipping rules",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <section
@@ -30,7 +103,8 @@ export default function GermanyShippingRulesPanel({
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
           alignItems: "center",
           marginBottom: 20,
         }}
@@ -51,32 +125,40 @@ export default function GermanyShippingRulesPanel({
               color: "#64748b",
             }}
           >
-            Configure weight-based shipping rates for Germany.
+            Configure weight-based
+            shipping rates for Germany.
           </p>
         </div>
 
-        <Form method="post">
-          <input
-            type="hidden"
-            name="action"
-            value="create-rule"
-          />
-
+        <div>
           <button
-            type="submit"
+            type="button"
+            onClick={addRule}
             style={{
-              background: "#2563eb",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: "pointer",
-              fontWeight: 600,
+              ...buttonStyle,
+              background: "#e2e8f0",
+              color: "#0f172a",
+              marginRight: 10,
             }}
           >
-            Add Rule
+            + Add Rule
           </button>
-        </Form>
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={saveRules}
+            style={{
+              ...buttonStyle,
+              background: "#2563eb",
+              color: "#fff",
+            }}
+          >
+            {saving
+              ? "Saving..."
+              : "Save Changes"}
+          </button>
+        </div>
       </div>
 
       <table
@@ -91,169 +173,108 @@ export default function GermanyShippingRulesPanel({
               background: "#f8fafc",
             }}
           >
-            <th style={cellHeader}>Min Weight</th>
-            <th style={cellHeader}>Max Weight</th>
-            <th style={cellHeader}>Price (€)</th>
-            <th style={cellHeader}>Actions</th>
+            <th style={cellHeader}>
+              Min Weight
+            </th>
+            <th style={cellHeader}>
+              Max Weight
+            </th>
+            <th style={cellHeader}>
+              Price (€)
+            </th>
+            <th style={cellHeader}>
+              Actions
+            </th>
           </tr>
         </thead>
 
-<tbody>
-  {rules.map((rule) => (
-    <tr key={rule.id}>
-      {editingId === rule.id ? (
-        <>
-          <td style={cell}>
-            <input
-              id={`min-${rule.id}`}
-              type="number"
-              step="0.01"
-              defaultValue={Number(rule.Min_Weight)}
-              style={inputStyle}
-            />
-          </td>
-
-          <td style={cell}>
-            <input
-              id={`max-${rule.id}`}
-              type="number"
-              step="0.01"
-              defaultValue={Number(rule.Max_Weight)}
-              style={inputStyle}
-            />
-          </td>
-
-          <td style={cell}>
-            <input
-              id={`price-${rule.id}`}
-              type="number"
-              step="0.01"
-              defaultValue={Number(rule.Price)}
-              style={inputStyle}
-            />
-          </td>
-
-          <td style={cell}>
-            <Form method="post" style={{ display: "inline" }}>
-              <input
-                type="hidden"
-                name="action"
-                value="update-rule"
-              />
-
-              <input
-                type="hidden"
-                name="id"
-                value={String(rule.id)}
-              />
-
-              <input
-                type="hidden"
-                name="minWeight"
-                value={
-                  typeof document !== "undefined"
-                    ? (
-                        document.getElementById(
-                          `min-${rule.id}`,
-                        ) as HTMLInputElement
-                      )?.value ?? String(rule.Min_Weight)
-                    : String(rule.Min_Weight)
+        <tbody>
+          {rules.map(
+            (rule, index) => (
+              <tr
+                key={
+                  rule.id ??
+                  `new-${index}`
                 }
-              />
-
-              <input
-                type="hidden"
-                name="maxWeight"
-                value={
-                  typeof document !== "undefined"
-                    ? (
-                        document.getElementById(
-                          `max-${rule.id}`,
-                        ) as HTMLInputElement
-                      )?.value ?? String(rule.Max_Weight)
-                    : String(rule.Max_Weight)
-                }
-              />
-
-              <input
-                type="hidden"
-                name="price"
-                value={
-                  typeof document !== "undefined"
-                    ? (
-                        document.getElementById(
-                          `price-${rule.id}`,
-                        ) as HTMLInputElement
-                      )?.value ?? String(rule.Price)
-                    : String(rule.Price)
-                }
-              />
-
-              <button
-                type="submit"
-                style={saveButton}
               >
-                Save
-              </button>
-            </Form>
+                <td style={cell}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={
+                      rule.Min_Weight
+                    }
+                    onChange={(e) =>
+                      updateRule(
+                        index,
+                        "Min_Weight",
+                        Number(
+                          e.target.value,
+                        ),
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </td>
 
-            <button
-              type="button"
-              style={cancelButton}
-              onClick={() => setEditingId(null)}
-            >
-              Cancel
-            </button>
-          </td>
-        </>
-      ) : (
-        <>
-          <td style={cell}>{Number(rule.Min_Weight)}</td>
+                <td style={cell}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={
+                      rule.Max_Weight
+                    }
+                    onChange={(e) =>
+                      updateRule(
+                        index,
+                        "Max_Weight",
+                        Number(
+                          e.target.value,
+                        ),
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </td>
 
-          <td style={cell}>{Number(rule.Max_Weight)}</td>
+                <td style={cell}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rule.Price}
+                    onChange={(e) =>
+                      updateRule(
+                        index,
+                        "Price",
+                        Number(
+                          e.target.value,
+                        ),
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </td>
 
-          <td style={cell}>
-            €{Number(rule.Price).toFixed(2)}
-          </td>
-
-          <td style={cell}>
-            <button
-              type="button"
-              style={editButton}
-              onClick={() => setEditingId(rule.id)}
-            >
-              Edit
-            </button>
-
-            <Form
-              method="post"
-              style={{ display: "inline" }}
-            >
-              <input
-                type="hidden"
-                name="action"
-                value="delete-rule"
-              />
-
-              <input
-                type="hidden"
-                name="id"
-                value={String(rule.id)}
-              />
-
-              <button
-                type="submit"
-                style={deleteButton}
-              >
-                Delete
-              </button>
-            </Form>
-          </td>
-        </>
-      )}
-    </tr>
-  ))}
-</tbody>
+                <td style={cell}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      deleteRule(index)
+                    }
+                    style={{
+                      ...buttonStyle,
+                      background:
+                        "#dc2626",
+                      color: "#fff",
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ),
+          )}
+        </tbody>
       </table>
 
       <div
@@ -266,7 +287,7 @@ export default function GermanyShippingRulesPanel({
         }}
       >
         <h3 style={{ marginTop: 0 }}>
-          Packing Logic Example
+          Germany Packing Logic
         </h3>
 
         <pre
@@ -283,13 +304,12 @@ export default function GermanyShippingRulesPanel({
 → Parcel 2 = 20kg
 
 10kg + 8kg + 5kg
-→ Packed into 1 parcel (23kg)
+→ Packed into one parcel (23kg)
 
-Single items above 31.5kg
-→ Freight/Heavy Item Pricing
-→ Never split physically
+Single item > 31.5kg
+→ Heavy Item Pricing
 
-Items below 31.5kg
+Multiple items
 → Packed efficiently up to 31.5kg per parcel`}
         </pre>
       </div>
@@ -311,45 +331,14 @@ const cell: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "8px",
+  borderRadius: 6,
   border: "1px solid #cbd5e1",
-  borderRadius: 6,
-  fontSize: 14,
 };
 
-const editButton: React.CSSProperties = {
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
+const buttonStyle: React.CSSProperties = {
+  padding: "8px 14px",
   borderRadius: 6,
-  padding: "6px 12px",
-  marginRight: 8,
-  cursor: "pointer",
-};
-
-const deleteButton: React.CSSProperties = {
-  background: "#dc2626",
-  color: "#fff",
   border: "none",
-  borderRadius: 6,
-  padding: "6px 12px",
   cursor: "pointer",
-};
-
-const saveButton: React.CSSProperties = {
-  background: "#16a34a",
-  color: "#fff",
-  border: "none",
-  borderRadius: 6,
-  padding: "6px 12px",
-  marginRight: 8,
-  cursor: "pointer",
-};
-
-const cancelButton: React.CSSProperties = {
-  background: "#64748b",
-  color: "#fff",
-  border: "none",
-  borderRadius: 6,
-  padding: "6px 12px",
-  cursor: "pointer",
+  fontWeight: 600,
 };

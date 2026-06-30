@@ -35,67 +35,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const action = formData.get("action");
 
-  if (action === "create-rule") {
-  await prisma.shipping_rules_DE.create({
-    data: {
-      Min_Weight: 0,
-      Max_Weight: 0,
-      Price: 0,
-    },
-  });
-
-  return redirect("/app");
-}
-
-if (action === "update-rule") {
-  
-console.log("Update ID:", formData.get("id"));
-
-const rawId = formData.get("id");
-
-if (!rawId) {
-  throw new Error("Missing rule id");
-}
-
-const id = BigInt(rawId.toString());
-
-console.log(
-  Object.fromEntries(formData.entries())
-);
-
-  await prisma.shipping_rules_DE.update({
-    where: {
-      id,
-    },
-    data: {
-      Min_Weight: Number(formData.get("minWeight")),
-      Max_Weight: Number(formData.get("maxWeight")),
-      Price: Number(formData.get("price")),
-    },
-  });
-
-  return redirect("/app");
-}
-
-if (action === "delete-rule") {
-const rawId = formData.get("id");
-
-if (!rawId) {
-  throw new Error("Missing rule id");
-}
-
-const id = BigInt(rawId.toString());
-
-  await prisma.shipping_rules_DE.delete({
-    where: {
-      id,
-    },
-  });
-
-  return redirect("/app");
-}
-
-
   if (action === "sync-products") {
     try {
       const existingRunningJob = await prisma.productSyncJob_de.findFirst({
