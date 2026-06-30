@@ -52,6 +52,8 @@ model ProductMapping_de {
   updatedAt        DateTime @default(now()) @updatedAt @db.Timestamp(6)
   price            Decimal? @db.Decimal
   weight           Decimal? @db.Decimal
+  product_type     String?
+  source_type      String?
 
   @@unique([shop, sku], map: "ProductMapping_de_shopDomain_sku_idx")
   @@index([shop], map: "ProductMapping_de_shopDomain_idx")
@@ -82,6 +84,7 @@ model shopify_products_final_Germany {
   seo_description                String?
   embedding                      Unsupported("vector")?
   is_external_embedding_finished Boolean?
+  weight                         Decimal?               @db.Decimal
 
   @@index([embedding])
   @@schema("public")
