@@ -104,7 +104,37 @@ export default function GermanyShippingRulesPanel({
       {editingId === rule.id ? (
         <>
           <td style={cell}>
-            <Form method="post">
+            <input
+              id={`min-${rule.id}`}
+              type="number"
+              step="0.01"
+              defaultValue={Number(rule.Min_Weight)}
+              style={inputStyle}
+            />
+          </td>
+
+          <td style={cell}>
+            <input
+              id={`max-${rule.id}`}
+              type="number"
+              step="0.01"
+              defaultValue={Number(rule.Max_Weight)}
+              style={inputStyle}
+            />
+          </td>
+
+          <td style={cell}>
+            <input
+              id={`price-${rule.id}`}
+              type="number"
+              step="0.01"
+              defaultValue={Number(rule.Price)}
+              style={inputStyle}
+            />
+          </td>
+
+          <td style={cell}>
+            <Form method="post" style={{ display: "inline" }}>
               <input
                 type="hidden"
                 name="action"
@@ -114,28 +144,49 @@ export default function GermanyShippingRulesPanel({
               <input
                 type="hidden"
                 name="id"
-                value={rule.id}
+                value={String(rule.id)}
               />
 
               <input
-                type="number"
-                step="0.01"
+                type="hidden"
                 name="minWeight"
-                defaultValue={Number(rule.Min_Weight)}
-                style={inputStyle}
-                required
+                value={
+                  typeof document !== "undefined"
+                    ? (
+                        document.getElementById(
+                          `min-${rule.id}`,
+                        ) as HTMLInputElement
+                      )?.value ?? String(rule.Min_Weight)
+                    : String(rule.Min_Weight)
+                }
               />
 
               <input
                 type="hidden"
                 name="maxWeight"
-                value={Number(rule.Max_Weight)}
+                value={
+                  typeof document !== "undefined"
+                    ? (
+                        document.getElementById(
+                          `max-${rule.id}`,
+                        ) as HTMLInputElement
+                      )?.value ?? String(rule.Max_Weight)
+                    : String(rule.Max_Weight)
+                }
               />
 
               <input
                 type="hidden"
                 name="price"
-                value={Number(rule.Price)}
+                value={
+                  typeof document !== "undefined"
+                    ? (
+                        document.getElementById(
+                          `price-${rule.id}`,
+                        ) as HTMLInputElement
+                      )?.value ?? String(rule.Price)
+                    : String(rule.Price)
+                }
               />
 
               <button
@@ -144,50 +195,22 @@ export default function GermanyShippingRulesPanel({
               >
                 Save
               </button>
-
-              <button
-                type="button"
-                style={cancelButton}
-                onClick={() => setEditingId(null)}
-              >
-                Cancel
-              </button>
             </Form>
-          </td>
 
-          <td style={cell}>
-            <input
-              form={`rule-${rule.id}`}
-              type="number"
-              step="0.01"
-              name="maxWeight"
-              defaultValue={Number(rule.Max_Weight)}
-              style={inputStyle}
-            />
+            <button
+              type="button"
+              style={cancelButton}
+              onClick={() => setEditingId(null)}
+            >
+              Cancel
+            </button>
           </td>
-
-          <td style={cell}>
-            <input
-              form={`rule-${rule.id}`}
-              type="number"
-              step="0.01"
-              name="price"
-              defaultValue={Number(rule.Price)}
-              style={inputStyle}
-            />
-          </td>
-
-          <td style={cell}></td>
         </>
       ) : (
         <>
-          <td style={cell}>
-            {Number(rule.Min_Weight)}
-          </td>
+          <td style={cell}>{Number(rule.Min_Weight)}</td>
 
-          <td style={cell}>
-            {Number(rule.Max_Weight)}
-          </td>
+          <td style={cell}>{Number(rule.Max_Weight)}</td>
 
           <td style={cell}>
             €{Number(rule.Price).toFixed(2)}
@@ -215,21 +238,12 @@ export default function GermanyShippingRulesPanel({
               <input
                 type="hidden"
                 name="id"
-                value={rule.id}
+                value={String(rule.id)}
               />
 
               <button
                 type="submit"
                 style={deleteButton}
-                onClick={(e) => {
-                  if (
-                    !window.confirm(
-                      "Delete this shipping rule?"
-                    )
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
               >
                 Delete
               </button>

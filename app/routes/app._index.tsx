@@ -51,8 +51,13 @@ if (action === "update-rule") {
   
 console.log("Update ID:", formData.get("id"));
 
-const id = BigInt(formData.get("id") as string);
+const rawId = formData.get("id");
 
+if (!rawId) {
+  throw new Error("Missing rule id");
+}
+
+const id = BigInt(rawId.toString());
 
 console.log(
   Object.fromEntries(formData.entries())
@@ -73,7 +78,13 @@ console.log(
 }
 
 if (action === "delete-rule") {
-const id = BigInt(formData.get("id") as string);
+const rawId = formData.get("id");
+
+if (!rawId) {
+  throw new Error("Missing rule id");
+}
+
+const id = BigInt(rawId.toString());
 
   await prisma.shipping_rules_DE.delete({
     where: {
