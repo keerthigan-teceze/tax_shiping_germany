@@ -51,6 +51,7 @@ model ProductMapping_de {
   createdAt        DateTime @default(now()) @db.Timestamp(6)
   updatedAt        DateTime @default(now()) @updatedAt @db.Timestamp(6)
   price            Decimal? @db.Decimal
+  weight           Decimal? @db.Decimal
 
   @@unique([shop, sku], map: "ProductMapping_de_shopDomain_sku_idx")
   @@index([shop], map: "ProductMapping_de_shopDomain_idx")
@@ -2293,14 +2294,6 @@ model vendorlist {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model vendors_unique {
-  id     Int     @id @default(autoincrement())
-  vendor String? @unique
-
-  @@schema("public")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model RequestLog_de {
   id           String   @id(map: "requestlog_de_pkey") @default(dbgenerated("gen_random_uuid()"))
   shop         String
@@ -2325,6 +2318,51 @@ model shipping_rules_DE {
   Price      Decimal? @db.Decimal
   created_at DateTime @default(now()) @db.Timestamptz(6)
 
+  @@schema("public")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model unique_vendor_list_UK {
+  vendor String?
+
+  @@ignore
+  @@schema("public")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model unique_vendor_list_germany {
+  vendor String?
+
+  @@ignore
+  @@schema("public")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model unique_vendor_list_us {
+  vendor String?
+
+  @@ignore
+  @@schema("public")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model us_common_with_germany {
+  vendor String?
+
+  @@ignore
+  @@schema("public")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model us_common_with_uk {
+  vendor String?
+
+  @@ignore
   @@schema("public")
 }
 

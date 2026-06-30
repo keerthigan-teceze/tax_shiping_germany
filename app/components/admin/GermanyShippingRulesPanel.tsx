@@ -130,7 +130,7 @@ Total Price =
 2kg rate`}
         </pre>
       </div>
-    </section>
+    </section> 
   );
 }
 

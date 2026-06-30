@@ -75,7 +75,7 @@ if (product && product.price) {
   const taxAmount = basePrice * (settings.taxPercentage / 100);
 
   const sourceProduct =
-    await prisma.shopify_products_final_Germany.findUnique({
+    await prisma.ProductMapping_de.findUnique({
       where: { sku },
       select: {
         sku: true,
