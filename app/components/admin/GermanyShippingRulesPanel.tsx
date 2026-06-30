@@ -4,7 +4,7 @@ interface GermanyShippingRule {
   id: number;
   Min_Weight: number;
   Max_Weight: number;
-  price: number;
+  Price: number;
 }
 
 interface Props {
@@ -89,9 +89,9 @@ export default function GermanyShippingRulesPanel({
         <tbody>
           {rules.map((rule) => (
             <tr key={rule.id}>
-            <td style={cell}>{Number(rule.Min_Weight ?? 0)}</td>
-            <td style={cell}>{Number(rule.Max_Weight ?? 0)}</td>
-            <td style={cell}>€{Number(rule.price ?? 0).toFixed(2)}</td>
+              <td style={cell}>{Number(rule.Min_Weight ?? 0)}</td>
+              <td style={cell}>{Number(rule.Max_Weight ?? 0)}</td>
+              <td style={cell}>€{Number(rule.Price ?? 0).toFixed(2)}</td>
               <td style={cell}>
                 <button style={editButton}>Edit</button>
                 <button style={deleteButton}>Delete</button>
@@ -110,9 +110,7 @@ export default function GermanyShippingRulesPanel({
           border: "1px solid #cbd5e1",
         }}
       >
-        <h3 style={{ marginTop: 0 }}>
-          Parcel Splitting Example
-        </h3>
+        <h3 style={{ marginTop: 0 }}>Parcel Splitting Example</h3>
 
         <pre
           style={{
@@ -120,13 +118,13 @@ export default function GermanyShippingRulesPanel({
             whiteSpace: "pre-wrap",
           }}
         >
-{`65kg shipment
+          {`65kg shipment
 
 Parcel 1 = 31.5kg
 Parcel 2 = 31.5kg
 Parcel 3 = 2kg
 
-Total price =
+Total Price =
 31.5kg rate +
 31.5kg rate +
 2kg rate`}

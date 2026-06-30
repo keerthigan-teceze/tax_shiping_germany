@@ -264,7 +264,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ...rule,
     Min_Weight: Number(rule.Min_Weight),
     Max_Weight: Number(rule.Max_Weight),
-    price: Number(rule.price),
+    Price: Number(rule.Price),
   }));
 
   return { mainData, mappingRows, logs, requestLogs, carrierService, rateSettings, productCount, mappingCount, latestSyncJob, germanyShippingRules };
