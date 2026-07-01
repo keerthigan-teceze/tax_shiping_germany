@@ -92,12 +92,12 @@ async function getUsdToEuroRate(): Promise<number> {
     const response = await fetch("https://api.frankfurter.app/latest?from=USD&to=EUR");
     if (response.ok) {
       const data = await response.json();
-      return data.rates?.EUR || 0.79;
+      return data.rates?.EUR || 0.88;
     }
   } catch (error) {
     console.error("Failed to fetch exchange rate:", error);
   }
-  return 0.79; // Fallback rate
+  return 0.88; // Fallback rate
 }
 
 async function getProduct(

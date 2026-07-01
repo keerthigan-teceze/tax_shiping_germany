@@ -3,7 +3,7 @@ import { syncProductsForShop } from "../lib/productSync";
 
 export const loader = async () => {
   try {
-    const jobs = await prisma.productSyncJob_UK.findMany({
+    const jobs = await prisma.productSyncJob_de.findMany({
       where: {
         status: { in: ["running", "failed"] },
       },

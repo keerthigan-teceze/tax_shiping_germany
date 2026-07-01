@@ -3,13 +3,13 @@ import prisma from "../db.server";
 export const loader = async () => {
   try {
     // ✅ Fetch shops (UPDATE THIS if you have a shop table)
-    const shops = await prisma.productSyncJob_UK.groupBy({
+    const shops = await prisma.productSyncJob_de.groupBy({
       by: ["shop"],
     });
 
     for (const { shop } of shops) {
       // ✅ Prevent duplicate running jobs
-      const existingRunning = await prisma.productSyncJob_UK.findFirst({
+      const existingRunning = await prisma.productSyncJob_de.findFirst({
         where: {
           shop,
           status: "running",
@@ -22,7 +22,7 @@ export const loader = async () => {
       }
 
       // ✅ Create new job (DON'T process here)
-      await prisma.productSyncJob_UK.create({
+      await prisma.productSyncJob_de.create({
         data: {
           id: crypto.randomUUID(),
           shop,
