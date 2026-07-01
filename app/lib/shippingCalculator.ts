@@ -75,7 +75,7 @@ if (product && product.price) {
   const taxAmount = basePrice * (settings.taxPercentage / 100);
 
   const sourceProduct =
-    await prisma.ProductMapping_de.findUnique({
+    await prisma.ProductMapping_de.findFirst({
       where: { sku },
       select: {
         sku: true,
