@@ -79,7 +79,6 @@ if (product && product.price) {
       where: { sku },
       select: {
         sku: true,
-        title: true,
         price: true,
         product_type: true,
         weight: true,
